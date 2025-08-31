@@ -65,4 +65,6 @@ for (EmiIngredient stack : source) {
 
 本项目是通过虚拟线程+协作式退出实现的，通过join强制等待旧线程退出，保证始终只有一个线程可以进行搜索，理论上能修复这个问题，如果我的分析无误
 
+等待我则是设计成由虚拟线程等待，不是主线程等待，这样就完成了原始代码的另一个目标，搜索时不阻塞主线程
+
 代码实现在[AsyncSearcher.java](/src/main/java/sajoyukimi/emi_multithreading_issue_fixed/AsyncSearcher.java)里面
