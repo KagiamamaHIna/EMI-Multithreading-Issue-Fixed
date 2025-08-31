@@ -68,3 +68,8 @@ for (EmiIngredient stack : source) {
 等待我则是设计成由虚拟线程等待，不是主线程等待，这样就完成了原始代码的另一个目标，搜索时不阻塞主线程
 
 代码实现在[AsyncSearcher.java](/src/main/java/sajoyukimi/emi_multithreading_issue_fixed/AsyncSearcher.java)里面
+
+## 名字？
+**E**MI **M**ultithreading **I**ssue - Fixed
+
+前面不仅仅可以缩写成EMI，并且还是一个递归缩写！
