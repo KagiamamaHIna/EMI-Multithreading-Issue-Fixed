@@ -24,11 +24,7 @@ public class AsyncSearcher {
         // 如果之前有一个搜索正在运行，就中断它
         if (oldSearchThread != null) {
             oldSearchThread.interrupt();
-            try{
-                oldSearchThread.join();//等待线程退出
-            } catch (InterruptedException e) {
-                EmiLog.error("Error while trying to wait for old thread to stop:", e);
-            }
+            worker.SetOldThread(oldSearchThread);
         }
         // 启动新的搜索线程
         EmiSearch.searchThread = newSearchThread;
@@ -39,16 +35,31 @@ public class AsyncSearcher {
         private final String query;
         private final List<? extends EmiIngredient> source;
         private final AsyncSearcher src;
+        private Thread OldThread = null;
         public SearchWorker(AsyncSearcher InputSrc, String query, List<? extends EmiIngredient> source) {
             src = InputSrc;
             this.query = query;
             this.source = source;
         }
 
+        void SetOldThread(Thread old){
+            OldThread = old;
+        }
+
         @Override
         public void run() {
             List<EmiIngredient> stacks = null;
             try {
+                if (OldThread != null){
+                    try{
+                        OldThread.join();//等待旧线程结束
+                    } catch (InterruptedException e) {
+                        OldThread.join();//只会被通知一次interrupt，所以捕获后重新等待即可
+                    }
+                }
+                if (Thread.currentThread().isInterrupted()){//如果我也过期了就退出
+                    return;
+                }
                 EmiSearch.CompiledQuery compiled = new EmiSearch.CompiledQuery(query);
                 if (Thread.currentThread().isInterrupted()){
                     return;
