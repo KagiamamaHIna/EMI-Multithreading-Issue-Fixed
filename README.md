@@ -1,5 +1,5 @@
 # EMI Multithreading Issue-Fixed
-练手作，主要是尝试修复在jech和emi同时存在的时候，因为线程不安全导致的潜在的NPE问题
+练手作，主要是尝试修复在jech和emi同时存在的时候，因为线程不安全导致的搜索时潜在发生的NPE问题
 
 使用Java21开发，模组支持的是1.20.1forge
 
