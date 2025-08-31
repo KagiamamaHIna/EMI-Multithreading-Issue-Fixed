@@ -18,17 +18,19 @@ public class AsyncSearcher {
         // 创建虚拟线程，但先不启动
         Thread newSearchThread = Thread.ofVirtual().unstarted(worker);
 
-        // 获取当前正在运行的旧线程，并用新线程替换它
-        Thread oldSearchThread = runningSearchThread.getAndSet(newSearchThread);
+        synchronized(AsyncSearcher.class){
+            // 获取当前正在运行的旧线程，并用新线程替换它
+            Thread oldSearchThread = runningSearchThread.getAndSet(newSearchThread);
 
-        // 如果之前有一个搜索正在运行，就中断它
-        if (oldSearchThread != null) {
-            oldSearchThread.interrupt();
-            worker.SetOldThread(oldSearchThread);
+            // 如果之前有一个搜索正在运行，就中断它
+            if (oldSearchThread != null) {
+                oldSearchThread.interrupt();
+                worker.SetOldThread(oldSearchThread);
+            }
+            // 启动新的搜索线程
+            EmiSearch.searchThread = newSearchThread;
+            newSearchThread.start();
         }
-        // 启动新的搜索线程
-        EmiSearch.searchThread = newSearchThread;
-        newSearchThread.start();
     }
 
     private static class SearchWorker implements Runnable {
@@ -44,6 +46,15 @@ public class AsyncSearcher {
 
         void SetOldThread(Thread old){
             OldThread = old;
+        }
+
+        private void apply(List<? extends EmiIngredient> result){
+            synchronized(AsyncSearcher.class){
+                if (src.runningSearchThread.compareAndSet(Thread.currentThread(), null)){
+                    EmiSearch.stacks = result;
+                    EmiSearch.searchThread = null;
+                }
+            }
         }
 
         @Override
@@ -84,17 +95,15 @@ public class AsyncSearcher {
             } catch (Exception e) {
                 EmiLog.error("Error when attempting to search:", e);
             } finally {
-                // 任务结束后，将自己从runningSearchThread中移除
-                // 使用compareAndSet确保只有当前线程自己才能移除自己，防止并发问题
-                if (src.runningSearchThread.compareAndSet(Thread.currentThread(), null)) {
-                    //如果行为成功，则代表是完成的任务线程，开始执行剩下的操作
+                if (!Thread.currentThread().isInterrupted()){
+                    List<? extends EmiIngredient> result;
                     if (stacks == null){
-                        EmiSearch.stacks = List.copyOf(source);
+                        result = List.copyOf(source);
                     }
                     else{
-                        EmiSearch.stacks = List.copyOf(stacks);
+                        result = List.copyOf(stacks);
                     }
-                    EmiSearch.searchThread = null;
+                    apply(result);
                 }
             }
         }
